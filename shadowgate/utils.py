@@ -1,7 +1,7 @@
 import json
 import random
 from importlib.resources import files
-from typing import List
+from typing import List, Union
 
 
 def _read_file(path: str):
@@ -28,9 +28,12 @@ class WordsListLoader:
 
 class URLBuilder:
 
-    def __init__(self, url: str, wordslists_path: str) -> None:
+    def __init__(self, url: str, wordslist: Union[str, List[str]]) -> None:
         self.url = url
-        self.wordslist = WordsListLoader(wordslists_path).load()
+        if isinstance(wordslist, list):
+            self.wordslist = wordslist
+        else:
+            self.wordslist = WordsListLoader(wordslist).load()
 
     def compile(self) -> List[str]:
         urls = []
