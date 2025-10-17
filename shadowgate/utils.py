@@ -28,7 +28,7 @@ class WordsListLoader:
 
 class URLBuilder:
 
-    def __init__(self, url: str, wordslist: Union[str, List[str]]) -> None:
+    def __init__(self, url: str, wordslist: str | List[str]) -> None:
         self.url = url
         if isinstance(wordslist, list):
             self.wordslist = wordslist
