@@ -11,8 +11,8 @@ class Engine:
     SEMAPHORE_COUNT = 2
     TIMEOUT = 3
     RETRIES = 1
-    WORDSLIST_PATH = os.path.join(os.getcwd(), ("assets/wordslist.json"))
-    USERAGENTS_PATH = os.path.join(os.getcwd(), ("assets/ua.json"))
+    WORDSLIST_PATH = os.path.join(os.getcwd(), ("shadowgte/data/wordslist.json"))
+    USERAGENTS_PATH = os.path.join(os.getcwd(), ("shadowgte/data/user_agents.json"))
     STATUS_CODES = [200, 301, 401, 500]
     RANDOM_USERAGENTS = True
 
