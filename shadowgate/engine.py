@@ -12,7 +12,7 @@ class Engine:
     RETRIES = 1
     WORDSLIST_PATH = "data/wordslist.json"
     USERAGENTS_PATH = "data/user_agents.json"
-    STATUS_CODES = [200, 301, 401, 500]
+    STATUS_CODES = [200, 301, 302, 401, 403, 405]
     RANDOM_USERAGENTS = True
 
     def __init__(
