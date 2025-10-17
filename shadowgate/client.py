@@ -5,7 +5,6 @@ from .utils import UserAgent
 
 class Client:
 
-    RETRIES = 0
     HEADERS = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -20,13 +19,17 @@ class Client:
     def __init__(
         self,
         useragents_path: str,
-        retries: int = RETRIES,
+        timeout: float,
+        retries: int,
         random_useragent: bool = True,
         follow_redirects: bool = True,
     ) -> None:
         self.transport = httpx.AsyncHTTPTransport(retries=retries)
         self.client = httpx.AsyncClient(
-            transport=self.transport, http2=True, follow_redirects=follow_redirects
+            transport=self.transport,
+            http2=True,
+            follow_redirects=follow_redirects,
+            timeout=timeout,
         )
         self.uas = UserAgent(useragents_path)
         self.random_useragent = random_useragent
