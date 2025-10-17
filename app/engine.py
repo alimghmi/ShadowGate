@@ -3,7 +3,7 @@ import os
 from typing import List
 
 from .client import Client
-from .utils import URLCompiler
+from .utils import URLBuilder
 
 
 class Engine:
@@ -35,7 +35,7 @@ class Engine:
         self.tasks = []
         self.found_urls = []
         self.semaphore = asyncio.Semaphore(sempahore_count)
-        self.compiled_urls = URLCompiler(url, wordslist_path).compile()[:100]
+        self.compiled_urls = URLBuilder(url, wordslist_path).compile()[:100]
         self.timeout = timeout
         self.status_codes = status_codes
 

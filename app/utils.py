@@ -17,7 +17,7 @@ class WordsListLoader:
             raise ValueError("Unsupported file extension for the wordslist.")
 
 
-class URLCompiler:
+class URLBuilder:
 
     def __init__(self, url: str, wordslists_path: str) -> None:
         self.url = url
