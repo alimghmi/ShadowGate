@@ -7,17 +7,14 @@ class Client:
 
     RETRIES = 0
     HEADERS = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Accept-Encoding": "gzip, deflate, br, zstd",
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/37.0.2062.94 Chrome/37.0.2062.94 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "none",
-        "Sec-Fetch-User": "?1",
-        "Sec-Fetch-Dest": "document",
-        "Sec-GPC": "1",
     }
 
     def __init__(
@@ -25,9 +22,12 @@ class Client:
         useragents_path: str,
         retries: int = RETRIES,
         random_useragent: bool = True,
+        follow_redirects: bool = True,
     ) -> None:
         self.transport = httpx.AsyncHTTPTransport(retries=retries)
-        self.client = httpx.AsyncClient(transport=self.transport)
+        self.client = httpx.AsyncClient(
+            transport=self.transport, http2=True, follow_redirects=follow_redirects
+        )
         self.uas = UserAgent(useragents_path)
         self.random_useragent = random_useragent
 
