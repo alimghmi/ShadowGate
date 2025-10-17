@@ -10,6 +10,7 @@ class Client:
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.5",
         "Accept-Encoding": "gzip, deflate, br, zstd",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/37.0.2062.94 Chrome/37.0.2062.94 Safari/537.36",
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1",
         "Sec-Fetch-Mode": "navigate",
@@ -31,10 +32,13 @@ class Client:
         self.random_useragent = random_useragent
 
     async def request(self, method: str, url: str, *args, **kwargs) -> httpx.Response:
-        if self.random_useragent:
-            if not "headers" in kwargs:
-                kwargs["headers"] = self.HEADERS.copy()
+        if not "headers" in kwargs:
+            kwargs["headers"] = self.HEADERS.copy()
 
-            kwargs["headers"]["User-Agent"] = self.uas._random
+        if self.random_useragent:
+            try:
+                kwargs["headers"]["User-Agent"] = self.uas._random
+            except TypeError:
+                raise ValueError("headers must be passed as a dict()")
 
         return await self.client.request(method=method, url=url, *args, **kwargs)
