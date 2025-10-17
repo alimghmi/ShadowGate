@@ -1,0 +1,12 @@
+DISCLAIMER OF USE
+
+This software is provided for educational and authorized security testing purposes only.
+By using, installing, or distributing this software, you acknowledge that you understand and agree to the following:
+
+1. You will use this software only on systems that you own or have explicit written authorization to test.
+2. Unauthorized use of this software against third-party systems is strictly prohibited and may be illegal.
+3. The author and contributors assume no liability for misuse or damages arising from the use of this software.
+4. This software is provided "AS IS" without warranty of any kind, express or implied.
+5. You are solely responsible for your actions and compliance with all applicable laws and regulations.
+
+If you do not agree with these terms, do not use or distribute this software.
