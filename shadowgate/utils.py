@@ -1,6 +1,15 @@
 import json
 import random
+from importlib.resources import files
 from typing import List
+
+
+def _read_file(path: str):
+    file = files("shadowgate") / path
+    if file.is_dir():
+        raise IsADirectoryError(f"{file} must be a path to a file.")
+
+    return file.read_text(encoding="utf-8")
 
 
 class WordsListLoader:
@@ -10,7 +19,7 @@ class WordsListLoader:
 
     def load(self) -> List:
         if self.wordslist_path.endswith(".json"):
-            return json.load(open(self.wordslist_path, "r"))
+            return json.loads(_read_file(self.wordslist_path))
         elif self.wordslist_path.endswith(".txt"):
             return [line.strip() for line in open(self.wordslist_path, "r").readlines()]
         else:
@@ -60,4 +69,4 @@ class UserAgent:
         return random.choice(self.uas)
 
     def _load_uas(self, useragents_path: str) -> List[str]:
-        return json.load(open(useragents_path, "r"))
+        return json.loads(_read_file(useragents_path))

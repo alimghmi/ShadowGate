@@ -1,5 +1,4 @@
 import asyncio
-import os
 from typing import List
 
 from .client import Client
@@ -11,8 +10,8 @@ class Engine:
     SEMAPHORE_COUNT = 2
     TIMEOUT = 3
     RETRIES = 1
-    WORDSLIST_PATH = os.path.join(os.getcwd(), ("shadowgte/data/wordslist.json"))
-    USERAGENTS_PATH = os.path.join(os.getcwd(), ("shadowgte/data/user_agents.json"))
+    WORDSLIST_PATH = "data/wordslist.json"
+    USERAGENTS_PATH = "data/user_agents.json"
     STATUS_CODES = [200, 301, 401, 500]
     RANDOM_USERAGENTS = True
 
@@ -41,10 +40,17 @@ class Engine:
 
     async def run(self) -> List:
         print("Starting...")
-        res = await self._worker_manager()
-        await self.c.client.aclose()
-        self.on = False
+        try:
+            res = await self._worker_manager()
+        finally:
+            await self.c.client.aclose()
+            self.on = False
+
         return res
+
+    def stop(self) -> None:
+        for task in self.tasks:
+            task.cancel()
 
     async def _worker_manager(self) -> List:
         async with asyncio.TaskGroup() as tg:
