@@ -1,4 +1,5 @@
 import asyncio
+import time
 from collections import Counter
 from typing import List
 from uuid import uuid4
@@ -127,6 +128,7 @@ class Engine:
         log.debug("Worker acquiring semaphore", extra={"url": url})
         async with self.semaphore:
             try:
+                t1 = time.perf_counter()
                 result = await self.c.request("GET", url)
                 if result.status_code in self.status_codes:
                     self.found_urls.append(url)
@@ -134,9 +136,11 @@ class Engine:
                         "Interesting URL found",
                         extra={"url": url, "status": result.status_code},
                     )
+                t2 = time.perf_counter()
                 return ProbeResult(
                     url=url,
                     status=result.status_code,
+                    elapsed=(t2 - t1),
                     ok=(result.status_code in self.status_codes),
                 )
             except asyncio.CancelledError:
