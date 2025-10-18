@@ -1,8 +1,11 @@
 import logging
 
+_PACKAGE_LOGGER_NAME = "shadowgate"
 
-def get_logger(name: str = "shadowgate") -> logging.Logger:
+
+def get_logger(name: str) -> logging.Logger:
     logger = logging.getLogger(name)
-    if not logger.handlers:
-        logger.addHandler(logging.NullHandler())
+    pkg = logging.getLogger(_PACKAGE_LOGGER_NAME)
+    if not pkg.handlers:
+        pkg.addHandler(logging.NullHandler())
     return logger
