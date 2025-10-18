@@ -49,16 +49,16 @@ class URLBuilder:
         if url.endswith("/"):
             url = url[:-1]
 
-        protocol = ""
+        schema = ""
         for _p in ["http://", "https://"]:
             if url.startswith(_p):
-                protocol = _p
+                schema = _p
                 url = url.replace(_p, "")
                 break
         else:
-            raise ValueError("URL must start with a protocol, http:// or https://.")
+            raise ValueError("URL must start with an schema, http:// or https://.")
 
-        res = f"{protocol}{path.replace("[url]", url)}"
+        res = f"{schema}{path.replace("[url]", url)}"
         return res
 
 
