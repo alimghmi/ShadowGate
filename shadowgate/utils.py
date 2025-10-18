@@ -1,7 +1,7 @@
 import json
 import random
 from importlib.resources import files
-from typing import List, Union
+from typing import List
 
 
 def _read_file(path: str):

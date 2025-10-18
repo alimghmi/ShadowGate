@@ -21,8 +21,8 @@ class Client:
         useragents_path: str,
         timeout: float,
         retries: int,
-        random_useragent: bool = True,
-        follow_redirects: bool = True,
+        random_useragent: bool,
+        follow_redirects: bool,
     ) -> None:
         self.transport = httpx.AsyncHTTPTransport(retries=retries)
         self.client = httpx.AsyncClient(
