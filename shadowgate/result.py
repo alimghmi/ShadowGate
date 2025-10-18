@@ -2,7 +2,7 @@ from dataclasses import asdict, dataclass
 from typing import Dict, Optional
 
 
-@dataclass
+@dataclass(slots=True)
 class ProbeResult:
     url: str
     status: Optional[int]
