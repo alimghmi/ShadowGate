@@ -1,14 +1,19 @@
+import random
+from typing import Optional
+
 import httpx
 
-from .utils import UserAgent
+from .utils import ProxyHandler, UserAgent
 
 
 class Client:
 
     HEADERS = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
+        ),
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9",
         "Accept-Encoding": "gzip, deflate, br",
@@ -23,14 +28,13 @@ class Client:
         retries: int,
         random_useragent: bool,
         follow_redirects: bool,
+        proxies_path: Optional[str] = None,
     ) -> None:
         self.transport = httpx.AsyncHTTPTransport(retries=retries)
-        self.client = httpx.AsyncClient(
-            transport=self.transport,
-            http2=True,
-            follow_redirects=follow_redirects,
-            timeout=timeout,
-        )
+        if proxies_path:
+            self.proxies = ProxyHandler(proxies_path)
+
+        self._init_clients(timeout, follow_redirects)
         self.uas = UserAgent(useragents_path)
         self.random_useragent = random_useragent
 
@@ -44,4 +48,38 @@ class Client:
             except TypeError:
                 raise ValueError("headers must be passed as a dict()")
 
-        return await self.client.request(method=method, url=url, *args, **kwargs)
+        return await self._get_client().request(method=method, url=url, *args, **kwargs)
+
+    def is_proxy_available(self) -> bool:
+        return hasattr(self, "proxies") and self.proxies.is_available
+
+    def _init_clients(self, timeout: float, follow_redirects: bool):
+        if hasattr(self, "proxies") and self.proxies.is_available:
+            self.clients = [
+                httpx.AsyncClient(
+                    transport=self.transport,
+                    proxy=proxy.url,
+                    http2=True,
+                    follow_redirects=follow_redirects,
+                    timeout=timeout,
+                    verify=False,
+                )
+                for proxy in self.proxies.proxies
+            ]
+        else:
+            self.clients = [
+                httpx.AsyncClient(
+                    transport=self.transport,
+                    http2=True,
+                    follow_redirects=follow_redirects,
+                    timeout=timeout,
+                    verify=False,
+                )
+            ]
+
+    def _get_client(self) -> httpx.AsyncClient:
+        return random.choice(self.clients)
+
+    async def close(self) -> None:
+        for client in self.clients:
+            await client.aclose()
