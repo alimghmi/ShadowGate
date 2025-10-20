@@ -1,9 +1,43 @@
+import asyncio
 import random
+from pathlib import Path
 from typing import Optional
 
 import httpx
+from tenacity import (AsyncRetrying, retry_if_exception_type,
+                      stop_after_attempt, wait_exponential_jitter)
 
 from .utils import ProxyHandler, UserAgent
+
+
+class _RetryableStatus(Exception):
+    def __init__(self, status: int) -> None:
+        super().__init__(status)
+        self.status = status
+
+
+def _is_retry_status(status: int) -> bool:
+    return status in (408, 429) or 500 <= status <= 599
+
+
+class _RateLimiter:
+    def __init__(self, rps: Optional[float]):
+        self.rps = rps
+        self._lock = asyncio.Lock()
+        self._next_time = 0.0
+        self._min_interval = (1.0 / rps) if (rps and rps > 0) else 0.0
+
+    async def acquire(self) -> None:
+        if not self._min_interval:
+            return
+        loop = asyncio.get_running_loop()
+        async with self._lock:
+            now = loop.time()
+            if now < self._next_time:
+                await asyncio.sleep(self._next_time - now)
+                now = loop.time()
+
+            self._next_time = max(now, self._next_time) + self._min_interval
 
 
 class Client:
@@ -23,22 +57,26 @@ class Client:
 
     def __init__(
         self,
-        useragents_path: str,
+        useragents_path: Path,
         timeout: float,
         retries: int,
         random_useragent: bool,
         follow_redirects: bool,
-        proxies_path: Optional[str] = None,
+        proxies_path: Optional[Path] = None,
+        rps: Optional[float] = None,
     ) -> None:
-        self.transport = httpx.AsyncHTTPTransport(retries=retries)
         if proxies_path:
             self.proxies = ProxyHandler(proxies_path)
 
         self._init_clients(timeout, follow_redirects)
         self.uas = UserAgent(useragents_path)
         self.random_useragent = random_useragent
+        self._app_retries = max(0, int(retries))
+        self._limiter = _RateLimiter(rps)
 
-    async def request(self, method: str, url: str, *args, **kwargs) -> httpx.Response:
+    async def request(
+        self, method: str, url: str, *args, **kwargs
+    ) -> httpx.Response | None:
         if not "headers" in kwargs:
             kwargs["headers"] = self.HEADERS.copy()
 
@@ -48,7 +86,30 @@ class Client:
             except TypeError:
                 raise ValueError("headers must be passed as a dict()")
 
-        return await self._get_client().request(method=method, url=url, *args, **kwargs)
+        client = self._get_client()
+        async for attempt in AsyncRetrying(
+            retry=retry_if_exception_type(
+                (
+                    httpx.ConnectError,
+                    httpx.ReadTimeout,
+                    httpx.RemoteProtocolError,
+                    httpx.WriteError,
+                    _RetryableStatus,
+                )
+            ),
+            stop=stop_after_attempt(self._app_retries + 1),
+            wait=wait_exponential_jitter(initial=0.25, max=4.0),
+            reraise=True,
+        ):
+            with attempt:
+                await self._limiter.acquire()
+                resp = await client.request(method=method, url=url, *args, **kwargs)
+                if _is_retry_status(resp.status_code):
+                    await resp.aread()
+                    await resp.aclose()
+                    raise _RetryableStatus(resp.status_code)
+
+                return resp
 
     def is_proxy_available(self) -> bool:
         return hasattr(self, "proxies") and self.proxies.is_available
@@ -57,7 +118,6 @@ class Client:
         if hasattr(self, "proxies") and self.proxies.is_available:
             self.clients = [
                 httpx.AsyncClient(
-                    transport=self.transport,
                     proxy=proxy.url,
                     http2=True,
                     follow_redirects=follow_redirects,
@@ -69,7 +129,6 @@ class Client:
         else:
             self.clients = [
                 httpx.AsyncClient(
-                    transport=self.transport,
                     http2=True,
                     follow_redirects=follow_redirects,
                     timeout=timeout,

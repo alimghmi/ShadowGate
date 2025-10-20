@@ -1,6 +1,7 @@
 import asyncio
 import time
 from collections import Counter
+from pathlib import Path
 from typing import List
 from uuid import uuid4
 
@@ -16,8 +17,8 @@ log = get_logger(__name__)
 
 class Engine:
 
-    WORDSLIST_PATH = "data/wordslist.json"
-    USERAGENTS_PATH = "data/user_agents.json"
+    WORDSLIST_PATH = Path("data/wordslist.json")
+    USERAGENTS_PATH = Path("data/user_agents.json")
 
     def __init__(
         self,
@@ -27,10 +28,11 @@ class Engine:
         follow_redirects: bool,
         timeout: int,
         retries: int,
+        rps: float,
         semaphore_count: int,
-        wordslist_path: str = WORDSLIST_PATH,
-        useragents_path: str = USERAGENTS_PATH,
-        proxies_path: str | None = None,
+        wordslist_path: Path = WORDSLIST_PATH,
+        useragents_path: Path = USERAGENTS_PATH,
+        proxies_path: Path | None = None,
     ) -> None:
         log.debug(
             "Engine.__init__ starting",
@@ -40,6 +42,7 @@ class Engine:
                 "useragents_path": useragents_path,
                 "proxies_path": proxies_path,
                 "timeout": timeout,
+                "rps": rps,
                 "status_codes": status_codes,
                 "random_useragent": random_useragent,
                 "retries": retries,
@@ -57,6 +60,7 @@ class Engine:
             useragents_path=useragents_path,
             proxies_path=proxies_path,
             timeout=self.timeout,
+            rps=rps,
             retries=retries,
             random_useragent=random_useragent,
             follow_redirects=follow_redirects,
@@ -128,7 +132,7 @@ class Engine:
             try:
                 t1 = time.perf_counter()
                 result = await self.c.request("GET", url)
-                if result.status_code in self.status_codes:
+                if result and result.status_code in self.status_codes:
                     self.found_urls.append(url)
                     log.info(
                         "Interesting URL found",
@@ -137,9 +141,17 @@ class Engine:
                 t2 = time.perf_counter()
                 return ProbeResult(
                     url=url,
-                    status=result.status_code,
+                    status=(
+                        result.status_code
+                        if result and hasattr(result, "status_code")
+                        else None
+                    ),
                     elapsed=(t2 - t1),
-                    ok=(result.status_code in self.status_codes),
+                    ok=(
+                        result.status_code in self.status_codes
+                        if result and hasattr(result, "status_code")
+                        else False
+                    ),
                 )
             except asyncio.CancelledError:
                 log.debug("Worker cancelled", extra={"url": url})
@@ -173,7 +185,10 @@ class Engine:
             self.url, [f"[url]/{uuid4().hex}/{uuid4().hex}" for _ in range(5)]
         ).compile()
         tasks = [asyncio.create_task(self.c.request("GET", url)) for url in built_urls]
-        status_codes = [resp.status_code for resp in await asyncio.gather(*tasks)]
+        status_codes = [
+            (resp.status_code if resp and hasattr(resp, "status_code") else None)
+            for resp in await asyncio.gather(*tasks)
+        ]
         if not status_codes:
             return None
 

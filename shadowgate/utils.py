@@ -17,8 +17,8 @@ def _read_file(path: str | Path):
 
 class WordsListLoader:
 
-    def __init__(self, wordslists_path: str) -> None:
-        self.wordslist_path = Path(wordslists_path)
+    def __init__(self, wordslists_path: Path) -> None:
+        self.wordslist_path = wordslists_path
 
     def load(self) -> List:
         if self.wordslist_path.suffix == ".json":
@@ -31,7 +31,7 @@ class WordsListLoader:
 
 class URLBuilder:
 
-    def __init__(self, url: str, wordslist: str | List[str]) -> None:
+    def __init__(self, url: str, wordslist: Path | List[str]) -> None:
         self.url = url
         if isinstance(wordslist, list):
             self.wordslist = wordslist
@@ -67,8 +67,8 @@ class URLBuilder:
 
 class UserAgent:
 
-    def __init__(self, useragents_path: str) -> None:
-        self.useragents_path = Path(useragents_path)
+    def __init__(self, useragents_path: Path) -> None:
+        self.useragents_path = useragents_path
         self.uas = self._load_uas()
 
     @property
@@ -81,8 +81,8 @@ class UserAgent:
 
 class ProxiesLoader:
 
-    def __init__(self, proxies_path: str) -> None:
-        self.proxies_path = Path(proxies_path)
+    def __init__(self, proxies_path: Path) -> None:
+        self.proxies_path = proxies_path
 
     def load(self) -> List:
         if not (self.proxies_path.exists() and self.proxies_path.is_file()):
@@ -98,7 +98,7 @@ class ProxiesLoader:
 
 class ProxyHandler:
 
-    def __init__(self, proxies: str | List[str]) -> None:
+    def __init__(self, proxies: Path | List[str]) -> None:
         self.proxies: List[Proxy] = []
         if isinstance(proxies, list):
             self.proxies_url = proxies
