@@ -7,8 +7,8 @@ from uuid import uuid4
 import httpx
 
 from .client import Client
+from .entities.result import ProbeResult
 from .logging_setup import get_logger
-from .result import ProbeResult
 from .utils import URLBuilder
 
 log = get_logger(__name__)
@@ -16,26 +16,21 @@ log = get_logger(__name__)
 
 class Engine:
 
-    SEMAPHORE_COUNT = 2
-    TIMEOUT = 3
-    RETRIES = 1
     WORDSLIST_PATH = "data/wordslist.json"
     USERAGENTS_PATH = "data/user_agents.json"
-    STATUS_CODES = [200, 301, 302, 401, 403, 405]
-    RANDOM_USERAGENTS = True
-    FOLLOW_REDIRECTS = False
 
     def __init__(
         self,
         url: str,
+        status_codes: List,
+        random_useragent: bool,
+        follow_redirects: bool,
+        timeout: int,
+        retries: int,
+        semaphore_count: int,
         wordslist_path: str = WORDSLIST_PATH,
         useragents_path: str = USERAGENTS_PATH,
-        timeout: int = TIMEOUT,
-        status_codes: List = STATUS_CODES,
-        random_useragent: bool = RANDOM_USERAGENTS,
-        retries: int = RETRIES,
-        semaphore_count: int = SEMAPHORE_COUNT,
-        follow_redirects: bool = FOLLOW_REDIRECTS,
+        proxies_path: str | None = None,
     ) -> None:
         log.debug(
             "Engine.__init__ starting",
@@ -43,6 +38,7 @@ class Engine:
                 "url": url,
                 "wordslist_path": wordslist_path,
                 "useragents_path": useragents_path,
+                "proxies_path": proxies_path,
                 "timeout": timeout,
                 "status_codes": status_codes,
                 "random_useragent": random_useragent,
@@ -59,12 +55,13 @@ class Engine:
         self.semaphore = asyncio.Semaphore(semaphore_count)
         self.c = Client(
             useragents_path=useragents_path,
+            proxies_path=proxies_path,
             timeout=self.timeout,
             retries=retries,
             random_useragent=random_useragent,
             follow_redirects=follow_redirects,
         )
-        self.built_urls = URLBuilder(url, wordslist_path).compile()
+        self.built_urls = URLBuilder(url, wordslist_path).compile()[:100]
         self.status_codes = status_codes
         log.info(
             "Engine initialized",
@@ -96,10 +93,11 @@ class Engine:
                 },
             )
         finally:
-            await self.c.client.aclose()
-            self.on = False
+            await self.c.close()
             log.info("HTTP client closed and engine stopped")
 
+        await asyncio.sleep(1)  # For cli module to read final updates before exiting
+        self.on = False
         return res
 
     def stop(self) -> None:
@@ -151,6 +149,7 @@ class Engine:
                 httpx.ReadTimeout,
                 httpx.RemoteProtocolError,
                 httpx.HTTPStatusError,
+                httpx.ConnectTimeout,
             ) as e:
                 log.warning(
                     "Network error", extra={"url": url, "error": type(e).__name__}
