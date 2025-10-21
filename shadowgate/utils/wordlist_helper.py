@@ -2,17 +2,18 @@ import json
 from pathlib import Path
 from typing import List
 
-from ..engine import Engine
 from .misc import _read_file
 
 
 class WordsListLoader:
 
+    WORDSLIST_PATH = Path("data/wordslist.json")
+
     def __init__(self, wordslists_path: Path) -> None:
         self.wordslist_path = wordslists_path
 
     def load(self) -> List:
-        if self.wordslist_path == Engine.WORDSLIST_PATH:
+        if self.wordslist_path == self.WORDSLIST_PATH:
             return json.loads(_read_file(self.wordslist_path))
 
         if self.wordslist_path.suffix == ".json":
