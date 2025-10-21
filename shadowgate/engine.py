@@ -30,6 +30,7 @@ class Engine:
         retries: int,
         rps: float,
         semaphore_count: int,
+        insecure: bool,
         wordslist_path: Path = WORDSLIST_PATH,
         useragents_path: Path = USERAGENTS_PATH,
         proxies_path: Path | None = None,
@@ -48,6 +49,7 @@ class Engine:
                 "retries": retries,
                 "semaphore_count": semaphore_count,
                 "follow_redirects": follow_redirects,
+                "insecure": insecure,
             },
         )
         self.on = True
@@ -59,6 +61,7 @@ class Engine:
         self.c = Client(
             useragents_path=useragents_path,
             proxies_path=proxies_path,
+            insecure=insecure,
             timeout=self.timeout,
             rps=rps,
             retries=retries,

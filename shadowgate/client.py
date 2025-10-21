@@ -62,12 +62,14 @@ class Client:
         retries: int,
         random_useragent: bool,
         follow_redirects: bool,
+        insecure: bool,
         proxies_path: Optional[Path] = None,
         rps: Optional[float] = None,
     ) -> None:
         if proxies_path:
             self.proxies = ProxyHandler(proxies_path)
 
+        self.insecure = insecure
         self._init_clients(timeout, follow_redirects)
         self.uas = UserAgent(useragents_path)
         self.random_useragent = random_useragent
@@ -122,7 +124,7 @@ class Client:
                     http2=True,
                     follow_redirects=follow_redirects,
                     timeout=timeout,
-                    verify=False,
+                    verify=(not self.insecure),
                 )
                 for proxy in self.proxies.proxies
             ]
@@ -132,7 +134,7 @@ class Client:
                     http2=True,
                     follow_redirects=follow_redirects,
                     timeout=timeout,
-                    verify=False,
+                    verify=(not self.insecure),
                 )
             ]
 
