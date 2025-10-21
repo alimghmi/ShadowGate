@@ -2,7 +2,7 @@ import asyncio
 import time
 from collections import Counter
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from urllib.parse import urlparse
 from uuid import uuid4
 
@@ -34,7 +34,7 @@ class Engine:
         insecure: bool,
         wordslist_path: Path = WORDSLIST_PATH,
         useragents_path: Path = USERAGENTS_PATH,
-        proxies_path: Path | None = None,
+        proxies: Optional[Path | List[str]] = None,
     ) -> None:
         log.debug(
             "Engine.__init__ starting",
@@ -42,7 +42,7 @@ class Engine:
                 "url": url,
                 "wordslist_path": wordslist_path,
                 "useragents_path": useragents_path,
-                "proxies_path": proxies_path,
+                "proxies": proxies,
                 "timeout": timeout,
                 "rps": rps,
                 "status_codes": status_codes,
@@ -61,7 +61,7 @@ class Engine:
         self.semaphore = asyncio.Semaphore(semaphore_count)
         self.c = Client(
             useragents_path=useragents_path,
-            proxies_path=proxies_path,
+            proxies=proxies,
             insecure=insecure,
             timeout=self.timeout,
             rps=rps,

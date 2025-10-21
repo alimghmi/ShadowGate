@@ -1,7 +1,7 @@
 import asyncio
 import random
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import httpx
 from tenacity import (AsyncRetrying, retry_if_exception_type,
@@ -63,11 +63,11 @@ class Client:
         random_useragent: bool,
         follow_redirects: bool,
         insecure: bool,
-        proxies_path: Optional[Path] = None,
+        proxies: Optional[Path | List[str]] = None,
         rps: Optional[float] = None,
     ) -> None:
-        if proxies_path:
-            self.proxies = ProxyHandler(proxies_path)
+        if proxies:
+            self.proxies = ProxyHandler(proxies)
 
         self.insecure = insecure
         self._init_clients(timeout, follow_redirects)
