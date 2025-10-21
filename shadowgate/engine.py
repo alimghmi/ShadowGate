@@ -1,4 +1,5 @@
 import asyncio
+import re
 import time
 from collections import Counter
 from pathlib import Path
@@ -222,6 +223,47 @@ class Engine:
                 return ProbeResult(
                     url=url, status=None, ok=False, error="UnexpectedError"
                 )
+
+    def find_disallow_paths(self, content: str) -> List:
+        pattern = re.compile(r"(?im)^\s*disallow\s*:\s*([^\s#]+)")
+        matches = pattern.findall(content or "")
+        if matches:
+            log.debug("robots: sample disallow", extra={"sample": matches[:5]})
+
+        return matches
+
+    async def get_robots(self) -> List[str] | bool:
+        url = URLBuilder(self.url, [f"[url]/robots.txt"]).compile()[0]
+        log.info("robots: fetching", extra={"url": url})
+
+        try:
+            resp = await self.c.request("GET", url, timeout=self.timeout)
+        except Exception as e:
+            log.error(
+                "robots: unexpected error",
+                extra={"url": url, "error": type(e).__name__, "details": str(e)},
+                exc_info=True,
+            )
+            return False
+
+        if resp.status_code != 200:
+            log.info("robots: non-200", extra={"url": url, "status": resp.status_code})
+            return False
+
+        ctype = resp.headers.get("content-type", "")
+        if "text" not in ctype and "robots" not in ctype:
+            log.debug("robots: unusual content-type", extra={"content_type": ctype})
+
+        if len(resp.content) > 512_000:
+            log.warning(
+                "robots: too large, truncating", extra={"bytes": len(resp.content)}
+            )
+            text = resp.text[:512_000]
+        else:
+            text = resp.text
+
+        paths = self.find_disallow_paths(text)
+        return URLBuilder(self.url, paths).compile()
 
     async def get_not_found_status_code(self) -> int | None:
         log.debug("Calculating host not-found status code", extra={"host": self.url})
