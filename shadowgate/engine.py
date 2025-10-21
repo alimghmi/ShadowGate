@@ -19,9 +19,6 @@ log = get_logger(__name__)
 
 class Engine:
 
-    WORDSLIST_PATH = Path("data/wordslist.json")
-    USERAGENTS_PATH = Path("data/user_agents.json")
-
     def __init__(
         self,
         url: str,
@@ -33,8 +30,8 @@ class Engine:
         rps: float,
         semaphore_count: int,
         insecure: bool,
-        wordslist_path: Path = WORDSLIST_PATH,
-        useragents_path: Path = USERAGENTS_PATH,
+        wordslist_path: Path,
+        useragents_path: Path,
         proxies: Optional[Path | List[str]] = None,
     ) -> None:
         log.debug(
@@ -70,7 +67,7 @@ class Engine:
             random_useragent=random_useragent,
             follow_redirects=follow_redirects,
         )
-        self.built_urls = URLBuilder(url, wordslist_path).compile()[:100]
+        self.built_urls = URLBuilder(url, wordslist_path).compile()[::-1][:10]
         self.status_codes = status_codes
         log.info(
             "Engine initialized",
@@ -179,7 +176,7 @@ class Engine:
                 result = await self.c.request("GET", url)
                 if result and result.status_code in self.status_codes:
                     self.found_urls.append(url)
-                    log.info(
+                    log.debug(
                         "Interesting URL found",
                         extra={"url": url, "status": result.status_code},
                     )
@@ -224,54 +221,21 @@ class Engine:
                     url=url, status=None, ok=False, error="UnexpectedError"
                 )
 
-    def find_disallow_paths(self, content: str) -> List:
-        pattern = re.compile(r"(?im)^\s*disallow\s*:\s*([^\s#]+)")
-        matches = pattern.findall(content or "")
-        if matches:
-            log.debug("robots: sample disallow", extra={"sample": matches[:5]})
-
-        return matches
-
-    async def get_robots(self) -> List[str] | bool:
-        url = URLBuilder(self.url, [f"[url]/robots.txt"]).compile()[0]
-        log.info("robots: fetching", extra={"url": url})
-
-        try:
-            resp = await self.c.request("GET", url, timeout=self.timeout)
-        except Exception as e:
-            log.error(
-                "robots: unexpected error",
-                extra={"url": url, "error": type(e).__name__, "details": str(e)},
-                exc_info=True,
-            )
-            return False
-
-        if resp.status_code != 200:
-            log.info("robots: non-200", extra={"url": url, "status": resp.status_code})
-            return False
-
-        ctype = resp.headers.get("content-type", "")
-        if "text" not in ctype and "robots" not in ctype:
-            log.debug("robots: unusual content-type", extra={"content_type": ctype})
-
-        if len(resp.content) > 512_000:
-            log.warning(
-                "robots: too large, truncating", extra={"bytes": len(resp.content)}
-            )
-            text = resp.text[:512_000]
-        else:
-            text = resp.text
-
-        paths = self.find_disallow_paths(text)
-        return URLBuilder(self.url, paths).compile()
+    async def _make_random_request(self, n: int = 5) -> List:
+        built_urls = URLBuilder(
+            self.url, [f"[url]/{uuid4().hex}/{uuid4().hex}" for _ in range(n)]
+        ).compile()
+        log.debug(f"{built_urls}")
+        tasks = [
+            asyncio.create_task(self.c.request("GET", url, follow_redirects=False))
+            for url in built_urls
+        ]
+        responses = await asyncio.gather(*tasks, return_exceptions=True)
+        return responses
 
     async def get_not_found_status_code(self) -> int | None:
         log.debug("Calculating host not-found status code", extra={"host": self.url})
-        built_urls = URLBuilder(
-            self.url, [f"[url]/{uuid4().hex}/{uuid4().hex}" for _ in range(5)]
-        ).compile()
-        tasks = [asyncio.create_task(self.c.request("GET", url)) for url in built_urls]
-        responses = await asyncio.gather(*tasks, return_exceptions=True)
+        responses = await self._make_random_request()
         status_codes = [
             getattr(r, "status_code", None)
             for r in responses
