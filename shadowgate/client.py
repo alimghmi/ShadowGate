@@ -76,9 +76,7 @@ class Client:
         self._app_retries = max(0, int(retries))
         self._limiter = _RateLimiter(rps)
 
-    async def request(
-        self, method: str, url: str, *args, **kwargs
-    ) -> httpx.Response | None:
+    async def request(self, method: str, url: str, *args, **kwargs) -> httpx.Response:
         if not "headers" in kwargs:
             kwargs["headers"] = self.HEADERS.copy()
 
@@ -111,7 +109,7 @@ class Client:
                     await resp.aclose()
                     raise _RetryableStatus(resp.status_code)
 
-                return resp
+        return resp
 
     def is_proxy_available(self) -> bool:
         return hasattr(self, "proxies") and self.proxies.is_available
