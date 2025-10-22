@@ -1,10 +1,9 @@
 [build-system]
-requires = ["setuptools>=69", "wheel"]
+requires = ["setuptools>=69", "setuptools-scm>=8", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "shadowgate"
-version = "0.1.0"
 description = "Admin panel finder and directory brute-forcer (async HTTPX/Typer)."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -37,7 +36,6 @@ dependencies = [
   "rich>=13",
 ]
 
-
 [project.optional-dependencies]
 dev = [
   "ruff>=0.6",
@@ -45,6 +43,11 @@ dev = [
   "build>=1.2",
   # "coverage>=7",
 ]
+
+[tool.setuptools_scm]
+write_to = "shadowgate/_version.py"
+version_scheme = "guess-next-dev"
+local_scheme = "node-and-date"
 
 [project.scripts]
 shadowgate = "shadowgate.cli:app"
