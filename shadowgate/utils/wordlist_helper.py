@@ -47,7 +47,7 @@ class URLBuilder:
         if url.endswith("/"):
             url = url[:-1]
 
-        scheme = ""
+        scheme, extra = "", ""
         for _p in ["http://", "https://"]:
             if url.startswith(_p):
                 scheme = _p
@@ -55,6 +55,10 @@ class URLBuilder:
                 break
         else:
             raise ValueError("URL must start with an scheme, http:// or https://.")
+        
+        if url.startswith("www."):
+            extra = "www."
+            url = url.replace("www.", "")
 
-        res = f"{scheme}{path.replace("[url]", url)}"
+        res = f"{scheme}{extra}{path.replace("[url]", url)}"
         return res
