@@ -1,0 +1,84 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shadowgate"
+version = "0.1.0"
+description = "Admin panel finder and directory brute-forcer (async HTTPX/Typer)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Ali Moghimi" }]
+keywords = ["security", "pentest", "admin-finder", "recon", "httpx", "cli"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Information Technology",
+  "Intended Audience :: System Administrators",
+  "Topic :: Security",
+  "Topic :: Internet :: WWW/HTTP",
+  "Topic :: Software Development :: Testing",
+  "Environment :: Console",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+
+dependencies = [
+  "httpx[socks,http2]>=0.27",
+  "tenacity>=8.4",
+  "typer>=0.12",
+  "rich>=13",
+]
+
+
+[project.optional-dependencies]
+dev = [
+  "ruff>=0.6",
+  "pytest>=8",
+  "build>=1.2",
+  # "coverage>=7",
+]
+
+[project.scripts]
+shadowgate = "shadowgate.cli:app"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["shadowgate*"]
+exclude = ["tests"]
+
+[tool.setuptools.package-data]
+shadowgate = ["data/*.json"]
+
+[tool.ruff]
+line-length = 100
+extend-exclude = ["__init__.py", "cli.py"]
+target-version = "py311"
+lint.select = ["E","F","I","B","UP","N","D","ASYNC","A","C4","PIE","RUF"]
+lint.ignore = [
+  "D100","D101","D102","D103","D104","D105","D106","D107","B008"
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+skip-magic-trailing-comma = false
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["shadowgate"]
