@@ -7,16 +7,21 @@ import logging
 import re
 import sys
 import time
+from collections.abc import Sequence
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
 from urllib.parse import urlsplit
 
 import typer
 from rich.console import Console
 from rich.logging import RichHandler
-from rich.progress import (BarColumn, MofNCompleteColumn, Progress,
-                           SpinnerColumn, TimeElapsedColumn,
-                           TimeRemainingColumn)
+from rich.progress import (
+    BarColumn,
+    MofNCompleteColumn,
+    Progress,
+    SpinnerColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn,
+)
 
 from .engine import Engine
 from .utils import UserAgent, WordsListLoader
@@ -29,8 +34,8 @@ __version__ = "0.1.0"
 
 
 class StripTracebacksFilter(logging.Filter):
-    """
-    Remove exc_info from log records unless we're in DEBUG.
+    """Remove exc_info from log records unless we're in DEBUG.
+
     This prevents ugly tracebacks for end-users even if code logs exc_info=True.
     """
 
@@ -47,8 +52,7 @@ class StripTracebacksFilter(logging.Filter):
 def _configure_logging(
     level: int = logging.INFO, debug_tracebacks: bool = False
 ) -> None:
-    """
-    Attach a Rich handler that writes to STDERR, and silence noisy libs.
+    """Attach a Rich handler that writes to STDERR, and silence noisy libs.
     """
     pkg_logger = logging.getLogger("shadowgate")
     pkg_logger.setLevel(level)
@@ -74,9 +78,9 @@ def _configure_logging(
 _SC_TOKEN = re.compile(r"^\d{3}$|^[1-5]xx$|^\d{3}-\d{3}$")
 
 
-def _parse_status_codes(exprs: Sequence[str]) -> List[int]:
-    """
-    Accept tokens like: 200, 3xx, 401-403
+def _parse_status_codes(exprs: Sequence[str]) -> list[int]:
+    """Accept tokens like: 200, 3xx, 401-403
+    
     Provided as multiple flags or a single comma-joined string.
     """
     tokens: list[str] = []
@@ -139,8 +143,8 @@ def _global(
     verbose: int = typer.Option(0, "-v", count=True, help="-v=INFO, -vv=DEBUG"),
     quiet: bool = typer.Option(False, "--quiet", help="Only errors"),
 ):
-    """
-    ShadowGate CLI.
+    """ShadowGate CLI.
+    
     Global flags must come before commands:
       python -m shadowgate.cli -v scan -t https://example.com --assume-legal
     """
@@ -170,23 +174,23 @@ def legal():
 
 @app.command()
 def scan(
-    target: Optional[str] = typer.Option(
+    target: str | None = typer.Option(
         None, "--target", "-t", help="Single URL or domain"
     ),
-    targets_file: Optional[Path] = typer.Option(
+    targets_file: Path | None = typer.Option(
         None, "--targets", help="File with one target per line"
     ),
-    wordlist: Optional[Path] = typer.Option(
+    wordlist: Path | None = typer.Option(
         None, "--wordlist", help="Override built-in wordlist"
     ),
-    useragents: Optional[Path] = typer.Option(
+    useragents: Path | None = typer.Option(
         None, "--useragents", help="Override built-in user-agents"
     ),
     # routing
-    proxies: Optional[Path] = typer.Option(
+    proxies: Path | None = typer.Option(
         None, "--proxies", help="File with one proxy per line"
     ),
-    proxy: List[str] = typer.Option(
+    proxy: list[str] = typer.Option(
         [],
         "--proxy",
         help="Explicit proxy URL (repeatable). E.g. http://1.2.3.4:8080 or socks5h://127.0.0.1:9050",
@@ -194,12 +198,12 @@ def scan(
     tor: bool = typer.Option(
         False, "--tor/--no-tor", help="Route traffic via Tor (SOCKS5H)"
     ),
-    tor_proxy: Optional[str] = typer.Option(
+    tor_proxy: str | None = typer.Option(
         None,
         "--tor-proxy",
         help="Override Tor SOCKS URL (default socks5h://127.0.0.1:9050)",
     ),
-    status_codes: List[str] = typer.Option(
+    status_codes: list[str] = typer.Option(
         ["200", "301", "302", "401-403"],
         "--status-codes",
         help="Comma list or tokens: 200,3xx,401-403",
@@ -224,7 +228,7 @@ def scan(
     out: str = typer.Option(
         "ndjson", "--out", help="table|json|ndjson|csv  (default: ndjson)"
     ),
-    output: Optional[Path] = typer.Option(
+    output: Path | None = typer.Option(
         None, "--output", help="Write results to file instead of STDOUT"
     ),
     progress: bool = typer.Option(
@@ -245,8 +249,7 @@ def scan(
         False, "--assume-legal", help="Confirm you have authorization"
     ),
 ):
-    """
-    Probe target(s) for exposed admin/login panels.
+    """Probe target(s) for exposed admin/login panels.
     Defaults: progress ON, machine-friendly NDJSON to STDOUT, logs to STDERR.
     """
     if not assume_legal:
@@ -284,7 +287,7 @@ def scan(
         )
         raise typer.Exit(code=2)
 
-    proxies_arg: Optional[Path | List[str]] = None
+    proxies_arg: Path | list[str] | None = None
     if proxies:
         proxies_arg = proxies
         err_console.print(f"Proxy mode: file ({_count_file_lines(proxies)} entries)")
@@ -385,10 +388,10 @@ async def _preflight_reachability(
     url: str,
     wordlist: Path,
     useragents: Path,
-    proxies: Optional[Path | List[str]],
+    proxies: Path | list[str] | None,
     timeout: float,
     rps: float,
-    status_codes: List[int],
+    status_codes: list[int],
     random_useragent: bool,
     retries: int,
     concurrency: int,
@@ -430,17 +433,17 @@ async def _preflight_not_found(
     url: str,
     wordlist: Path,
     useragents: Path,
-    proxies: Optional[Path | List[str]],
+    proxies: Path | list[str] | None,
     timeout: float,
     rps: float,
-    status_codes: List[int],
+    status_codes: list[int],
     random_useragent: bool,
     retries: int,
     concurrency: int,
     follow_redirects: bool,
     insecure: bool,
     show_status: bool,
-) -> Optional[int]:
+) -> int | None:
     with (
         err_console.status(
             "Preflight: detecting host not-found code...", spinner="dots"
@@ -475,22 +478,21 @@ async def _run_one_target(
     url: str,
     wordlist: Path,
     useragents: Path,
-    proxies: Optional[Path | List[str]],
+    proxies: Path | list[str] | None,
     timeout: float,
     rps: float,
-    status_codes: List[int],
+    status_codes: list[int],
     random_useragent: bool,
     retries: int,
     concurrency: int,
     follow_redirects: bool,
     insecure: bool,
     out: str,
-    output: Optional[Path],
+    output: Path | None,
     show_progress: bool,
     echo_found: bool,
-) -> Tuple[int, int]:
-    """
-    Run a single target. By default: show progress and 'FOUND' to STDERR.
+) -> tuple[int, int]:
+    """Run a single target. By default: show progress and 'FOUND' to STDERR.
     STDOUT only receives the chosen data output.
     """
     engine = Engine(
@@ -527,7 +529,7 @@ async def _run_one_target(
     findings = 0
     errors = 0
 
-    async def _monitor_found(task_id: Optional[int]) -> None:
+    async def _monitor_found(task_id: int | None) -> None:
         last_done = 0
         last_found_count = 0
         while engine.on:
@@ -596,12 +598,11 @@ async def _run_one_target(
 
 def _render_results(
     results,
-    status_codes: List[int],
+    status_codes: list[int],
     out: str,
-    output: Optional[Path],
+    output: Path | None,
 ) -> None:
-    """
-    Send data to STDOUT only. All logs/status remained on STDERR.
+    """Send data to STDOUT only. All logs/status remained on STDERR.
     """
     if out == "table":
         from rich.table import Table
@@ -680,4 +681,4 @@ if __name__ == "__main__":
         raise
     except Exception as e:
         err_console.print(f"[red]Fatal:[/] {type(e).__name__}: {e}")
-        raise SystemExit(2)
+        raise SystemExit(2) from e

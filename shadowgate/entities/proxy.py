@@ -1,6 +1,5 @@
 import re
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass(slots=True)
@@ -8,8 +7,8 @@ class Proxy:
     scheme: str
     host: str
     port: int
-    username: Optional[str]
-    password: Optional[str]
+    username: str | None
+    password: str | None
 
     def __str__(self) -> str:
         auth = ""

@@ -1,14 +1,13 @@
 from dataclasses import asdict, dataclass
-from typing import Dict, Optional
 
 
 @dataclass(slots=True)
 class ProbeResult:
     url: str
-    status: Optional[int]
+    status: int | None
     ok: bool
-    error: Optional[str] = None
-    elapsed: Optional[float] = None
+    error: str | None = None
+    elapsed: float | None = None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return asdict(self)

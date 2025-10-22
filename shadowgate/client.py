@@ -1,16 +1,20 @@
 import asyncio
 import random
 from pathlib import Path
-from typing import List, Optional
+from typing import ClassVar
 
 import httpx
-from tenacity import (AsyncRetrying, retry_if_exception_type,
-                      stop_after_attempt, wait_exponential_jitter)
+from tenacity import (
+    AsyncRetrying,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential_jitter,
+)
 
 from .utils import ProxyHandler, UserAgent
 
 
-class _RetryableStatus(Exception):
+class RetryableStatusError(Exception):
     def __init__(self, status: int) -> None:
         super().__init__(status)
         self.status = status
@@ -21,7 +25,7 @@ def _is_retry_status(status: int) -> bool:
 
 
 class _RateLimiter:
-    def __init__(self, rps: Optional[float]):
+    def __init__(self, rps: float | None):
         self.rps = rps
         self._lock = asyncio.Lock()
         self._next_time = 0.0
@@ -41,8 +45,7 @@ class _RateLimiter:
 
 
 class Client:
-
-    HEADERS = {
+    HEADERS: ClassVar = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -63,8 +66,8 @@ class Client:
         random_useragent: bool,
         follow_redirects: bool,
         insecure: bool,
-        proxies: Optional[Path | List[str]] = None,
-        rps: Optional[float] = None,
+        proxies: Path | list[str] | None = None,
+        rps: float | None = None,
     ) -> None:
         if proxies:
             self.proxies = ProxyHandler(proxies)
@@ -76,15 +79,15 @@ class Client:
         self._app_retries = max(0, int(retries))
         self._limiter = _RateLimiter(rps)
 
-    async def request(self, method: str, url: str, *args, **kwargs) -> httpx.Response:
-        if not "headers" in kwargs:
+    async def request(self, method: str, url: str, **kwargs) -> httpx.Response:
+        if "headers" not in kwargs:
             kwargs["headers"] = self.HEADERS.copy()
 
         if self.random_useragent:
             try:
                 kwargs["headers"]["User-Agent"] = self.uas._random
-            except TypeError:
-                raise ValueError("headers must be passed as a dict()")
+            except TypeError as e:
+                raise ValueError("headers must be passed as a dict()") from e
 
         client = self._get_client()
         async for attempt in AsyncRetrying(
@@ -94,7 +97,7 @@ class Client:
                     httpx.ReadTimeout,
                     httpx.RemoteProtocolError,
                     httpx.WriteError,
-                    _RetryableStatus,
+                    RetryableStatusError,
                 )
             ),
             stop=stop_after_attempt(self._app_retries + 1),
@@ -103,11 +106,11 @@ class Client:
         ):
             with attempt:
                 await self._limiter.acquire()
-                resp = await client.request(method=method, url=url, *args, **kwargs)
+                resp = await client.request(method=method, url=url, **kwargs)
                 if _is_retry_status(resp.status_code):
                     await resp.aread()
                     await resp.aclose()
-                    raise _RetryableStatus(resp.status_code)
+                    raise RetryableStatusError(resp.status_code)
 
         return resp
 
