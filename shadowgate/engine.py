@@ -67,7 +67,7 @@ class Engine:
             random_useragent=random_useragent,
             follow_redirects=self.follow_redirects,
         )
-        self.built_urls = URLBuilder(url, wordslist_path).compile()[::-1][:100]
+        self.built_urls = URLBuilder(url, wordslist_path).compile()
         self.status_codes = status_codes
         log.info(
             "Engine initialized",
