@@ -1,32 +1,29 @@
 import json
 import random
 from pathlib import Path
-from typing import List
 
 from ..entities.proxy import Proxy, _parse_from_url
 
 
 class ProxiesLoader:
-
     def __init__(self, proxies_path: Path) -> None:
         self.proxies_path = proxies_path
 
-    def load(self) -> List:
+    def load(self) -> list:
         if not (self.proxies_path.exists() and self.proxies_path.is_file()):
             raise FileNotFoundError(f"{self.proxies_path} not found.")
 
         if self.proxies_path.suffix == ".json":
-            return json.load(open(self.proxies_path, "r"))
+            return json.load(open(self.proxies_path))
         elif self.proxies_path.suffix == ".txt":
-            return [line.strip() for line in open(self.proxies_path, "r").readlines()]
+            return [line.strip() for line in open(self.proxies_path).readlines()]
         else:
             raise ValueError("Unsupported file extension for the wordslist.")
 
 
 class ProxyHandler:
-
-    def __init__(self, proxies: Path | List[str]) -> None:
-        self.proxies: List[Proxy] = []
+    def __init__(self, proxies: Path | list[str]) -> None:
+        self.proxies: list[Proxy] = []
         if isinstance(proxies, list):
             self.proxies_url = proxies
         else:

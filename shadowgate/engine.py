@@ -2,7 +2,6 @@ import asyncio
 import time
 from collections import Counter
 from pathlib import Path
-from typing import List, Optional
 from urllib.parse import urlparse
 from uuid import uuid4
 
@@ -17,11 +16,10 @@ log = get_logger(__name__)
 
 
 class Engine:
-
     def __init__(
         self,
         url: str,
-        status_codes: List,
+        status_codes: list,
         random_useragent: bool,
         follow_redirects: bool,
         timeout: int,
@@ -31,7 +29,7 @@ class Engine:
         insecure: bool,
         wordslist_path: Path,
         useragents_path: Path,
-        proxies: Optional[Path | List[str]] = None,
+        proxies: Path | list[str] | None = None,
     ) -> None:
         log.debug(
             "Engine.__init__ starting",
@@ -74,7 +72,7 @@ class Engine:
             extra={"total_built_urls": len(self.built_urls), "timeout": self.timeout},
         )
 
-    async def run(self) -> List:
+    async def run(self) -> list:
         log.info("Scan starting", extra={"target": self.url})
         try:
             res = await self._worker_manager()
@@ -94,9 +92,7 @@ class Engine:
         return res
 
     def stop(self) -> None:
-        log.warning(
-            "Engine.stop called; cancelling tasks", extra={"tasks": len(self.tasks)}
-        )
+        log.warning("Engine.stop called; cancelling tasks", extra={"tasks": len(self.tasks)})
         for task in self.tasks:
             task.cancel()
 
@@ -135,17 +131,17 @@ class Engine:
             )
             return False
 
-    async def _worker_manager(self) -> List:
+    async def _worker_manager(self) -> list:
         log.debug(
             "Creating worker tasks",
             extra={"count": len(self.built_urls), "semaphore": self.semaphore._value},
         )
-        results: List[tuple[str, ProbeResult]] = []
+        results: list[tuple[str, ProbeResult]] = []
 
         async with asyncio.TaskGroup() as tg:
             self.tasks = [tg.create_task(self._worker(url)) for url in self.built_urls]
 
-        for url, task in zip(self.built_urls, self.tasks):
+        for url, task in zip(self.built_urls, self.tasks, strict=False):
             if task.cancelled():
                 pr = ProbeResult(url=url, status=None, ok=False, error="Cancelled")
             elif task.exception() is not None:
@@ -154,9 +150,7 @@ class Engine:
                     "Worker raised unexpectedly",
                     extra={"url": url, "error": type(exc).__name__},
                 )
-                pr = ProbeResult(
-                    url=url, status=None, ok=False, error=type(exc).__name__
-                )
+                pr = ProbeResult(url=url, status=None, ok=False, error=type(exc).__name__)
             else:
                 pr = task.result()
 
@@ -185,9 +179,7 @@ class Engine:
                 return ProbeResult(
                     url=url,
                     status=(
-                        result.status_code
-                        if result and hasattr(result, "status_code")
-                        else None
+                        result.status_code if result and hasattr(result, "status_code") else None
                     ),
                     elapsed=(t2 - t1),
                     ok=(
@@ -206,43 +198,33 @@ class Engine:
                 httpx.HTTPStatusError,
                 httpx.ConnectTimeout,
             ) as e:
-                log.warning(
-                    "Network error", extra={"url": url, "error": type(e).__name__}
-                )
-                return ProbeResult(
-                    url=url, status=None, ok=False, error=type(e).__name__
-                )
+                log.warning("Network error", extra={"url": url, "error": type(e).__name__})
+                return ProbeResult(url=url, status=None, ok=False, error=type(e).__name__)
             except Exception as e:
                 log.error(
                     "Unexpected error",
                     extra={"url": url, "error": type(e).__name__},
                     exc_info=True,
                 )
-                return ProbeResult(
-                    url=url, status=None, ok=False, error="UnexpectedError"
-                )
+                return ProbeResult(url=url, status=None, ok=False, error="UnexpectedError")
 
-    async def _make_random_request(self, n: int = 5) -> List:
+    async def _make_random_request(self, n: int = 5) -> list:
         built_urls = URLBuilder(
             self.url, [f"[url]/{uuid4().hex}/{uuid4().hex}" for _ in range(n)]
         ).compile()
         log.debug(f"{built_urls}")
         tasks = [
-            asyncio.create_task(
-                self.c.request("GET", url, follow_redirects=self.follow_redirects)
-            )
+            asyncio.create_task(self.c.request("GET", url, follow_redirects=self.follow_redirects))
             for url in built_urls
         ]
         responses = await asyncio.gather(*tasks, return_exceptions=True)
         return responses
 
-    async def get_not_found_status_code(self) -> Optional[int]:
+    async def get_not_found_status_code(self) -> int | None:
         log.debug("Calculating host not-found status code", extra={"host": self.url})
         responses = await self._make_random_request()
         status_codes = [
-            getattr(r, "status_code", None)
-            for r in responses
-            if not isinstance(r, Exception)
+            getattr(r, "status_code", None) for r in responses if not isinstance(r, Exception)
         ]
         if not status_codes:
             return
