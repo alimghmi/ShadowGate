@@ -46,9 +46,9 @@ dev = [
 ]
 
 [tool.setuptools_scm]
-write_to = "shadowgate/_version.py"
+local_scheme = "no-local-version"
 version_scheme = "guess-next-dev"
-local_scheme = "node-and-date"
+write_to = "shadowgate/_version.py"
 fallback_version = "0.0.0"
 
 [project.scripts]

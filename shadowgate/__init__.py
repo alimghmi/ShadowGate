@@ -1,5 +1,4 @@
 try:
-    from importlib.metadata import version as _pkg_version
-    __version__ = _pkg_version("shadowgate")
-except Exception:
+    from ._version import version as __version__
+except Exception:  # pragma: no cover
     __version__ = "0.0.0"
