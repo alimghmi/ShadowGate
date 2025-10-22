@@ -1,5 +1,4 @@
 import asyncio
-import re
 import time
 from collections import Counter
 from pathlib import Path
@@ -56,6 +55,7 @@ class Engine:
         self.tasks = []
         self.found_urls = []
         self.timeout = timeout
+        self.follow_redirects = follow_redirects
         self.semaphore = asyncio.Semaphore(semaphore_count)
         self.c = Client(
             useragents_path=useragents_path,
@@ -65,9 +65,9 @@ class Engine:
             rps=rps,
             retries=retries,
             random_useragent=random_useragent,
-            follow_redirects=follow_redirects,
+            follow_redirects=self.follow_redirects,
         )
-        self.built_urls = URLBuilder(url, wordslist_path).compile()[::-1][:10]
+        self.built_urls = URLBuilder(url, wordslist_path).compile()[::-1][:100]
         self.status_codes = status_codes
         log.info(
             "Engine initialized",
@@ -180,6 +180,7 @@ class Engine:
                         "Interesting URL found",
                         extra={"url": url, "status": result.status_code},
                     )
+
                 t2 = time.perf_counter()
                 return ProbeResult(
                     url=url,
@@ -227,13 +228,15 @@ class Engine:
         ).compile()
         log.debug(f"{built_urls}")
         tasks = [
-            asyncio.create_task(self.c.request("GET", url, follow_redirects=False))
+            asyncio.create_task(
+                self.c.request("GET", url, follow_redirects=self.follow_redirects)
+            )
             for url in built_urls
         ]
         responses = await asyncio.gather(*tasks, return_exceptions=True)
         return responses
 
-    async def get_not_found_status_code(self) -> int | None:
+    async def get_not_found_status_code(self) -> Optional[int]:
         log.debug("Calculating host not-found status code", extra={"host": self.url})
         responses = await self._make_random_request()
         status_codes = [
@@ -242,7 +245,7 @@ class Engine:
             if not isinstance(r, Exception)
         ]
         if not status_codes:
-            return None
+            return
 
         sc_counts = Counter(status_codes)
         top = sc_counts.most_common(1)[0][0] or None
