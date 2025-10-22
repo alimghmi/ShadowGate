@@ -51,6 +51,11 @@ version_scheme = "guess-next-dev"
 write_to = "shadowgate/_version.py"
 fallback_version = "0.0.0"
 
+[project.urls]
+Homepage = "https://github.com/yourusername/shadowgate"
+Repository = "https://github.com/yourusername/shadowgate"
+Issues = "https://github.com/yourusername/shadowgate/issues"
+
 [project.scripts]
 shadowgate = "shadowgate.cli:app"
 
