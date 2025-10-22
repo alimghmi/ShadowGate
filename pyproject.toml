@@ -4,6 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "shadowgate"
+dynamic = ["version"] 
 description = "Admin panel finder and directory brute-forcer (async HTTPX/Typer)."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -48,6 +49,7 @@ dev = [
 write_to = "shadowgate/_version.py"
 version_scheme = "guess-next-dev"
 local_scheme = "node-and-date"
+fallback_version = "0.0.0"
 
 [project.scripts]
 shadowgate = "shadowgate.cli:app"
