@@ -55,7 +55,7 @@ class URLBuilder:
                 break
         else:
             raise ValueError("URL must start with an scheme, http:// or https://.")
-        
+
         if url.startswith("www."):
             extra = "www."
             url = url.replace("www.", "")
