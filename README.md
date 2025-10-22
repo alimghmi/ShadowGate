@@ -8,7 +8,7 @@ It performs high-speed directory enumeration using async HTTP requests, customiz
 ## Features
 
 - **Asynchronous scanning** powered by `httpx` and `asyncio`
-- **SOCKS5 / Tor proxy support**
+- **HTTP/ SOCKS5 / Tor proxy support**
 - **Retry and rate limiting**
 - **Status code–based filtering**
 - **Structured CLI output and progress tracking**
@@ -66,10 +66,10 @@ shadowgate scan -t https://example.com --proxy socks5://127.0.0.1:9050
 shadowgate scan -t https://example.com --tor
 ```
 
-Save results to a file:
+Load a wordlist and save json results to a file:
 
 ```bash
-shadowgate scan -t https://example.com --assume-legal > results.txt
+shadowgate scan -t https://example.com --assume-legal --wordlist links.txt --output result.json --out json
 ```
 
 ---

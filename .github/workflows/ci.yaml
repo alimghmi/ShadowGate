@@ -30,7 +30,7 @@ jobs:
       - name: Lint (ruff)
         run: ruff check .
 
-      - name: Install package (editable)
+      - name: Install package
         run: pip install -e .
 
       - name: Run tests (pytest)
