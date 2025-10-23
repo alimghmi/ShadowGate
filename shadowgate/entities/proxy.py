@@ -28,7 +28,7 @@ class Proxy:
 
 def _parse_from_url(url: str) -> Proxy | bool:
     pattern = re.compile(
-        r"^(?P<scheme>https?|socks4|socks5:\/\/)"
+        r"^(?P<scheme>(https?|socks4|socks5):\/\/)"
         r"(?:(?P<username>[^:@\/\s]+)"
         r"(?::(?P<password>[^@\/\s]*))?@)?"
         r"(?P<host>\[[0-9A-Fa-f:.]+\]|[^:\/\s]+)"
