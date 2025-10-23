@@ -1,7 +1,8 @@
 import json
 from pathlib import Path
-from shadowgate.utils.wordlist_helper import WordsListLoader, URLBuilder
+
 from shadowgate.utils.useragent_helper import UserAgent
+from shadowgate.utils.wordlist_helper import URLBuilder, WordsListLoader
 
 
 def test_wordslist_loader_custom_file(tmp_path: Path):

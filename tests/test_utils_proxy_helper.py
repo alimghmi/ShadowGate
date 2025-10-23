@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
+
 from shadowgate.utils.proxy_helper import ProxiesLoader, ProxyHandler
-from shadowgate.entities.proxy import _parse_from_url
 
 
 def test_proxies_loader_from_json_and_txt(tmp_path: Path):

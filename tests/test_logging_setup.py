@@ -1,4 +1,5 @@
 import logging
+
 from shadowgate.logging_setup import get_logger
 
 
