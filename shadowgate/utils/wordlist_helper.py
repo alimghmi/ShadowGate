@@ -57,5 +57,10 @@ class URLBuilder:
             extra = "www."
             url = url.replace("www.", "")
 
-        res = f"{scheme}{extra}{path.replace('[url]', url)}"
+        if "[url]" in path:
+            res = f"{scheme}{extra}{path.replace('[url]', url)}"
+        else:
+            new_path = path[1:] if path.startswith("/") else path
+            res = f"{scheme}{extra}{url}/{new_path}"
+            
         return res
