@@ -23,13 +23,9 @@ Key features:
 - Machine-readable formats: `ndjson`, `json`, `csv`.
 - Legal disclaimers and safety controls to discourage misuse.
 
----
-
-<!-- ## Badges & Demo
 
 ![demo placeholder](docs/demo.gif)
 
---- -->
 
 ## Installation
 
