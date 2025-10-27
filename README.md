@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Repo](https://img.shields.io/badge/github-alimghmi%2FShadowGate-lightgrey.svg)](https://github.com/alimghmi/ShadowGate)
 
-ShadowGate is a fast, async-driven web reconnaissance and exposure scanner for detecting admin panels, login interfaces, and misconfigured endpoints across single or multiple targets — built for professional penetration testers and security researchers.
+ShadowGate is a fast, async-driven web reconnaissance and exposure scanner for detecting admin panels, login interfaces, and misconfigured endpoints across single or multiple targets, built for professional penetration testers and security researchers.
 
 > ⚠️ **Authorized testing only.** You must have explicit permission to scan any target.
 
@@ -61,9 +61,9 @@ python -m shadowgate.cli scan -t https://example.com --assume-legal
 
 ### Global options
 
-- `-v`, `-vv` — Increase verbosity (info/debug).
-- `--quiet` — Suppress non-error logs.
-- `--version` — Show version and exit.
+- `-v`, `-vv` - Increase verbosity (info/debug).
+- `--quiet` - Suppress non-error logs.
+- `--version` - Show version and exit.
 
 ---
 
@@ -116,10 +116,10 @@ Options summary (high level):
 
 ## Output formats
 
-- `ndjson` — Newline-delimited JSON (recommended for pipelines)
-- `json` — Pretty JSON
-- `csv` — Spreadsheet-compatible
-- `table` — Human-readable Rich table
+- `ndjson` - Newline-delimited JSON (recommended for pipelines)
+- `json` - Pretty JSON
+- `csv` - Spreadsheet-compatible
+- `table` - Human-readable Rich table
 
 Example NDJSON line:
 
@@ -147,10 +147,10 @@ Logs and progress/status output are written to STDERR; scan results are emitted 
 
 ## Architecture (brief)
 
-- `cli.py` — Typer-based CLI with Rich output and logging controls.
-- `engine.py` — Asynchronous scanning engine handling requests, rate-limiting, and result collection.
-- `utils.py` — Wordlists, user-agents, helper utilities.
-- `wordlists/` — Default wordlists and payloads.
+- `cli.py` - Typer-based CLI with Rich output and logging controls.
+- `engine.py` - Asynchronous scanning engine handling requests, rate-limiting, and result collection.
+- `utils.py` - Wordlists, user-agents, helper utilities.
+- `wordlists/` - Default wordlists and payloads.
 
 The CLI isolates control-plane logs (stderr) from data-plane output (stdout), enabling safe automation and piping.
 
@@ -177,19 +177,3 @@ Contributions are welcome.
 3. Open a Pull Request
 
 Please include tests and documentation for new features.
-
----
-
-## License
-
-MIT License © Ali Moghimi  
-See `LICENSE` for details.
-
----
-
-## Acknowledgements & References
-
-- Inspired by tools like `ffuf`, `dirsearch`, and `nmap`.
-- Built with: [Typer](https://typer.tiangolo.com), [Rich](https://github.com/Textualize/rich)
-
----
