@@ -198,7 +198,7 @@ class Engine:
                 httpx.HTTPStatusError,
                 httpx.ConnectTimeout,
             ) as e:
-                log.warning("Network error", extra={"url": url, "error": type(e).__name__})
+                log.debug("Network error", extra={"url": url, "error": type(e).__name__})
                 return ProbeResult(url=url, status=None, ok=False, error=type(e).__name__)
             except Exception as e:
                 log.error(
