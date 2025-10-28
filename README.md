@@ -30,15 +30,15 @@ Key features:
 ## Installation
 
 ```bash
+pip install shadowgate
+```
+
+Or:
+
+```bash
 git clone https://github.com/alimghmi/ShadowGate.git
 cd ShadowGate
 pip install -e .
-```
-
-Or (future):
-
-```bash
-pip install shadowgate
 ```
 
 Requirements: **Python 3.10+**
@@ -50,13 +50,15 @@ Requirements: **Python 3.10+**
 Basic CLI syntax:
 
 ```bash
+shadowgate [GLOBAL FLAGS] COMMAND [OPTIONS]
+# OR
 python -m shadowgate.cli [GLOBAL FLAGS] COMMAND [OPTIONS]
 ```
 
 Example:
 
 ```bash
-python -m shadowgate.cli scan -t https://example.com --assume-legal
+shadowgate scan -t https://example.com --assume-legal
 ```
 
 ### Global options
